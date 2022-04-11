@@ -4,20 +4,22 @@ input.onButtonPressed(Button.A, function () {
     setScreen()
 })
 function setScreen () {
-    if (on) {
+    if (lightOn) {
         basic.showIcon(IconNames.SmallSquare)
     } else {
         basic.clearScreen()
     }
 }
 function toggleOn () {
-    on = !(on)
+    if (!(isDoorOpen)) {
+        lightOn = !(lightOn)
+    }
 }
 function detektDoubleTap () {
-    if (target > input.runningTime()) {
+    if (targetTime > input.runningTime()) {
         toggleOn()
     } else {
-        target = input.runningTime() + delay
+        targetTime = input.runningTime() + delay
     }
 }
 input.onSound(DetectedSound.Loud, function () {
@@ -28,6 +30,11 @@ input.onSound(DetectedSound.Loud, function () {
 input.onButtonPressed(Button.B, function () {
     ringBell()
 })
+input.onPinPressed(TouchPin.P1, function () {
+    toggleOn()
+    setOutPin()
+    setScreen()
+})
 function ringBell () {
     basic.showIcon(IconNames.Diamond)
     for (let index = 0; index < 3; index++) {
@@ -37,14 +44,24 @@ function ringBell () {
     setScreen()
 }
 function setOutPin () {
-    if (on) {
+    if (lightOn) {
         pins.digitalWritePin(DigitalPin.P0, 1)
     } else {
         pins.digitalWritePin(DigitalPin.P0, 0)
     }
 }
-let target = 0
-let on = false
+let targetTime = 0
+let isDoorOpen = false
+let lightOn = false
 let delay = 0
 pins.digitalWritePin(DigitalPin.P0, 0)
 delay = 600
+basic.forever(function () {
+    if (isDoorOpen != !(input.pinIsPressed(TouchPin.P1))) {
+        isDoorOpen = !(input.pinIsPressed(TouchPin.P1))
+        lightOn = isDoorOpen
+        setOutPin()
+        setScreen()
+    }
+    basic.pause(500)
+})
